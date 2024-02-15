@@ -8,10 +8,10 @@ Check_input         proc
     cmp al, 'q'
     je Exit_programm
 
-    cmp al, 50h
+    cmp al, 50h      ;   Down button
     je Inc_curr_line
 
-    cmp al, 48h
+    cmp al, 48h      ;   Up   button
     je Dec_curr_line
 
     ret

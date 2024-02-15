@@ -65,12 +65,13 @@ Write_String        proc
     mov cl, [di]       ; get count of symbols        
     inc di
     push ax
-
-    mov ax, si         ; check  
-    and ax, 1
     
-    add si, ax
     sub si, cx
+
+    mov ax, si         ; check aligment of symbols
+    and ax, 1
+    add si, ax
+
     add si, 2d
 
     pop ax
@@ -152,7 +153,7 @@ DisplayBorder       proc
 
     mov ax, 80d                 ; 80 - Border_width
     sub ax, cx
-;-------
+;--------------------------------
     push bx                     ; save bx
 
     mov bx, ax                  ; this part for aligment by even numbers adress
@@ -160,7 +161,7 @@ DisplayBorder       proc
     add ax, bx
 
     pop bx                      ; repair bx
-;--------
+;--------------------------------
     add bx, ax
     sub bx, 2d
 
@@ -207,13 +208,15 @@ DisplayBorder       proc
         mov al, Border_height           ; get current line number
         sub al, dl
 
-        cmp al, Line_count
+        cmp al, Line_count              ; current line > Line_count
         ja @@Skip_text_line
 
-        @@skip_next:
-        inc si
+        @@skip_next:                    ; skip spaces before string
         cmp [si], byte ptr ' '
-        je @@skip_next
+        jne @@skip_end
+            inc si
+        jmp @@skip_next
+        @@skip_end:
 
         push bx                         ; Save bx
 
@@ -249,7 +252,7 @@ set_current_color:
     jmp Return_to_loop
 
 
-; Select border mode by code
+; Select border mode by code //TODO: a[i]
 ; Destroy           AH
 ; Return            DI - the position of the first symbol of selected border
 Select_mode         proc
@@ -280,7 +283,7 @@ Select_mode         proc
 ; Write text from input
 ; Entry             BX - position
 ; Asumes            ES = 0b800h
-; Destroy           SI
+; Destroy           SI, BX
 Write_text_line_into_box proc
 
     @@next:
@@ -291,12 +294,13 @@ Write_text_line_into_box proc
     mov es:[bx], ax
 
     add bx, 2d
-
     inc si
 
     jmp @@next
 
     @@end_loop:
+
+    inc si                      ; go to next symbol after $
     
     ret
                     endp

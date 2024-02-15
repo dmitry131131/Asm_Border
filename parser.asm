@@ -9,12 +9,18 @@ Parser              proc
 
     call Parse_number    
 
+    cmp al, 78d
+    ja Print_error_message
+
     mov [Border_width], byte ptr al
 ;------------------------------------------------------------------
 ; Get border height
     call Skip_spaces          ; go to start of the first symbol
 
     call Parse_number                   
+
+    cmp al, 22d
+    ja Print_error_message
 
     mov [Border_height], byte ptr al
 ;------------------------------------------------------------------
