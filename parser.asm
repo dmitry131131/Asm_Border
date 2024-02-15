@@ -24,6 +24,41 @@ Parser              proc
     call Parse_number
 
     mov [Border_mode], byte ptr al
+;------------------------------------------------------------------
+    call Skip_spaces               ; go to first string symbol
+
+    xor ax, ax
+    mov ax, di
+    mov Text_position, byte ptr al
+;------------------------------------------------------------------
+    push di
+
+    xor cx, cx
+
+    @@next:
+    call Skip_spaces                ; Go to next line
+
+    call Text_counter               ; Count len of symbols
+    cmp al, Border_width            ; Check len of string
+    jae Print_error_message
+
+    inc cl                          ; increment count of lines
+
+    mov ax, di                      ; Check position in command line
+    mov bx, 80h
+    sub ax, 128d
+    cmp al, byte ptr [bx]
+    jae @@end_loop
+
+    jmp @@next
+    @@end_loop:
+
+    pop di
+
+    mov Line_count, cl
+    cmp cl, Border_height
+    ja Print_error_message
+
     ret
                     endp
 
@@ -41,6 +76,36 @@ Counter             proc
         inc di
     jmp @@start_counter_loop
     @@end_counter_loop:
+
+    ret
+                    endp
+
+; Funtion count symbols of text before $
+; Entry             DI - first symbol of text
+; Destroy           AX
+; Return            DI, AX - count of symbols
+Text_counter        proc
+
+    mov ax, di
+    @@next:
+    cmp byte ptr [di], '$'
+    je @@end_loop
+        inc di
+
+        cmp di, 255d
+        jae Print_error_message
+
+    jmp @@next
+    @@end_loop:
+
+    push di
+
+    sub di, ax
+    mov ax, di      ; Return value
+
+    pop di
+
+    inc di          ; go to next symbol
 
     ret
                     endp

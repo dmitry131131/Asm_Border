@@ -1,10 +1,11 @@
 model tiny
-.186
+.386
 .code 
 org 100h
 locals @@
 
-Black_back_white_front equ 70h
+White_back_black_front equ 70h
+Black_back_white_front equ 07h
 
 Start:
 jmp main                ; jump to the main function
@@ -172,7 +173,7 @@ DisplayBorder       proc
 
     call Select_mode                    ; set border style
 
-    mov ah, Black_back_white_front      ; Write first line
+    mov ah, White_back_black_front      ; Write first line
     call Write_line
     push di
 
@@ -182,12 +183,50 @@ DisplayBorder       proc
 
     mov dl, Border_height               ; write border body
 
+    xor cx, cx
+    mov cl, Text_position
+    mov si, cx
+
     @@next:
         dec dl
+
         call Shift_to_next_line
         mov cl, Border_width
-        mov ah, Black_back_white_front
+
+;-------------------------------------------------------------
+        mov ah, Border_height           ; Select line color
+        sub ah, dl
+        cmp ah, Current_line
+        je set_current_color
+        mov ah, White_back_black_front
+        Return_to_loop:
+;-------------------------------------------------------------
+
         call Write_line
+
+        mov al, Border_height           ; get current line number
+        sub al, dl
+
+        cmp al, Line_count
+        ja @@Skip_text_line
+
+        @@skip_next:
+        inc si
+        cmp [si], byte ptr ' '
+        je @@skip_next
+
+        push bx                         ; Save bx
+
+        xor cx, cx
+        mov cl, Border_width            ; get write position
+        sub bx, cx
+        sub bx, cx
+
+        call Write_text_line_into_box
+
+        pop bx                          ; Repair bx
+        @@Skip_text_line:
+
         sub di, 3d
 
     cmp dl, 0
@@ -196,12 +235,19 @@ DisplayBorder       proc
     call Shift_to_next_line
     add di, 3d
                                      
-    mov ah, Black_back_white_front    ; write last line
+    mov ah, White_back_black_front      ; write last line
     mov cl, Border_width
     call Write_line
 
     ret
                     endp
+
+; Function set Black background and white text
+; Destroy           AH
+set_current_color:  
+    mov ah, Black_back_white_front
+    jmp Return_to_loop
+
 
 ; Select border mode by code
 ; Destroy           AH
@@ -229,6 +275,30 @@ Select_mode         proc
         mov di, offset Border_3
         ret
 
+                    endp
+
+; Write text from input
+; Entry             BX - position
+; Asumes            ES = 0b800h
+; Destroy           SI
+Write_text_line_into_box proc
+
+    @@next:
+    cmp [si], byte ptr '$'               ; Check line terminator
+    je @@end_loop
+
+    mov al, byte ptr [si]
+    mov es:[bx], ax
+
+    add bx, 2d
+
+    inc si
+
+    jmp @@next
+
+    @@end_loop:
+    
+    ret
                     endp
 
 end Start

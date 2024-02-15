@@ -7,6 +7,9 @@
     Border_width  db 10d
     Border_height db 10d
     Border_mode   db 01d
+    Text_position db 00d
+    Current_line  db 01d
+    Line_count    db 00d
 
     Error_message db "Error!", '$'
     Clean_monitor db 80*24 dup(' '), '$'
