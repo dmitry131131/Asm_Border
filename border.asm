@@ -15,9 +15,19 @@ main                proc
     mov bx, 0b800h          ; Puts to es offset to a vmem adress
     mov es, bx
 
-    call Parser
+    call Parser             ; Parse data from command line
 
-    call DisplayBorder
+    @@Main_loop:
+
+    call Clear              ; Clear monitor
+
+    call DisplayBorder      ; Display border
+
+    call Check_input        ; Check input(pressed keys)
+
+    call Clear              ; Clear monitor
+
+    jmp @@Main_loop
 
 ;---------------------------------------------------------------
 Exit_programm:
@@ -25,8 +35,19 @@ Exit_programm:
     int 21h 
                     endp
 
+; Function that clean monitor
+; Destroy           AH, DX
+Clear               proc
+    mov ah, 09h
+    mov dx, offset Clean_monitor
+    int 21h
+
+    ret
+                    endp
 ;---------------------------------------------------------------
 include data.asm
+;---------------------------------------------------------------
+include input.asm
 ;---------------------------------------------------------------
 include error.asm
 ;---------------------------------------------------------------
@@ -111,19 +132,36 @@ Shift_to_next_line  proc
 ; Destr             CX, AX, BX, SI, DI, DX
 DisplayBorder       proc
     xor cx, cx
-    mov cl, Border_width
+    mov cl, Border_height       ; get border height
 
-    mov bx, (4*80)*2    ; get start position
-    mov ax, 80d
+    mov ax, 25d                 ; 25 - border height
     sub ax, cx
 
-    push bx
-    mov bx, ax
+    shr ax, 1                   ; ax/2
+    mov bx, 160d                
+
+    mul bx                      ; ax * 160
+
+    mov bx, ax                  ; get start position
+
+;------------------------------------------------------
+;get position by OX
+    xor cx, cx
+    mov cl, Border_width        ; get border width in cl
+
+    mov ax, 80d                 ; 80 - Border_width
+    sub ax, cx
+;-------
+    push bx                     ; save bx
+
+    mov bx, ax                  ; this part for aligment by even numbers adress
     and bx, 1
     add ax, bx
-    pop bx
 
+    pop bx                      ; repair bx
+;--------
     add bx, ax
+    sub bx, 2d
 
     mov si, bx          ; get center of border
     xor ax, ax
@@ -132,8 +170,7 @@ DisplayBorder       proc
 
 ;------------------------------------------------
 
-                    ; set border style
-    call Select_mode
+    call Select_mode                    ; set border style
 
     mov ah, Black_back_white_front      ; Write first line
     call Write_line
@@ -143,7 +180,7 @@ DisplayBorder       proc
     call Write_String
     pop di
 
-    mov dl, Border_height
+    mov dl, Border_height               ; write border body
 
     @@next:
         dec dl

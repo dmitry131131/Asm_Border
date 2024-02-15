@@ -9,4 +9,5 @@
     Border_mode   db 01d
 
     Error_message db "Error!", '$'
+    Clean_monitor db 80*24 dup(' '), '$'
 .code
