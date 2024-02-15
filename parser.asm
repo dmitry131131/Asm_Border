@@ -5,19 +5,21 @@ Parser              proc
     mov di, 82h     ; set pointer in the start of command line
 ;------------------------------------------------------------------
 ; Get border width
+    call Skip_spaces
+
     call Parse_number    
 
     mov [Border_width], byte ptr al
 ;------------------------------------------------------------------
 ; Get border height
-    inc di          ; go to start of the first symbol
+    call Skip_spaces          ; go to start of the first symbol
 
     call Parse_number                   
 
     mov [Border_height], byte ptr al
 ;------------------------------------------------------------------
 ; Get border style
-    inc di
+    call Skip_spaces
 
     call Parse_number
 
@@ -83,6 +85,22 @@ Parse_number       proc
     add al, ah                  ; add first number with second one
 
     inc di                      ; go to the next symbol after number
+
+    ret
+                    endp
+
+; Function find first not ' ' symbol
+; Entry             DI - start position
+; Destroy           DI
+; Return            DI - the first string symbol
+Skip_spaces         proc
+
+    @@next:
+    cmp byte ptr [di], ' '
+    jne @@end
+        inc di
+    jmp @@next
+    @@end:
 
     ret
                     endp

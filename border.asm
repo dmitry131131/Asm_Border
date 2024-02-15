@@ -2,6 +2,7 @@ model tiny
 .186
 .code 
 org 100h
+locals @@
 
 Black_back_white_front equ 70h
 
@@ -51,12 +52,12 @@ Write_String        proc
     add si, 2d
 
     pop ax
-    next_2:
+    @@next:
         mov al, byte ptr [di]
         mov es:[si], ax
         add si, 2d
         inc di
-    loop next_2
+    loop @@next
 
     ret
                     endp
@@ -75,10 +76,10 @@ Write_line          proc
     inc di
 
     mov al, byte ptr [di]               ; Write second N symbols of line
-    next:
+    @@next:
         mov es:[bx], ax
         add bx, 2d
-    loop next
+    loop @@next
     inc di
 
     mov al, byte ptr [di]               ; write first symbol
@@ -144,7 +145,7 @@ DisplayBorder       proc
 
     mov dl, Border_height
 
-    next_3:
+    @@next:
         dec dl
         call Shift_to_next_line
         mov cl, Border_width
@@ -153,7 +154,7 @@ DisplayBorder       proc
         sub di, 3d
 
     cmp dl, 0
-    jne next_3
+    jne @@next
 
     call Shift_to_next_line
     add di, 3d
@@ -172,22 +173,22 @@ Select_mode         proc
     mov ah, [Border_mode]
 
     cmp ah, 1d
-        je @@First_mode
+        je @First_mode
     cmp ah, 2d
-        je @@Second_mode
+        je @Second_mode
     cmp ah, 3d
-        je @@Third_mode
+        je @Third_mode
 
 
     mov di, offset Border_1
     ret
-    @@First_mode:
+    @First_mode:
         mov di, offset Border_1
         ret
-    @@Second_mode:
+    @Second_mode:
         mov di, offset Border_2
         ret
-    @@Third_mode:
+    @Third_mode:
         mov di, offset Border_3
         ret
 
